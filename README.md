@@ -8,7 +8,7 @@ other platforms.
 - Developed with **Kotlin Multiplatform**
 - Uses **Jetpack Compose Multiplatform**
 - Shared business logic across platforms
-- Supports Android, Desktop, and optionally iOS
+- Supports Android and iOS
 
 ## 📸 Preview
 
