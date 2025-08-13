@@ -1,0 +1,293 @@
+package org.example.currencyapp.presentation.component
+
+import Currency
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import currencyapp.composeapp.generated.resources.Res
+import currencyapp.composeapp.generated.resources.exchange_illustration
+import currencyapp.composeapp.generated.resources.refresh_ic
+import currencyapp.composeapp.generated.resources.switch_ic
+import headerColor
+import org.example.currencyapp.domain.model.CurrencyCode
+import org.example.currencyapp.domain.model.CurrencyType
+import org.example.currencyapp.domain.model.DisplayResult
+import org.example.currencyapp.domain.model.RateStatus
+import org.example.currencyapp.domain.model.RequestState
+import org.example.currencyapp.getPlatform
+import org.example.currencyapp.util.displayCurrentDateTime
+import org.jetbrains.compose.resources.painterResource
+import staleColor
+
+@Composable
+fun HomeHeader(
+    status: RateStatus,
+    source: RequestState<Currency>,
+    target: RequestState<Currency>,
+    amount: Double,
+    onAmountChange: (Double) -> Unit,
+    onRatesRefresh: () -> Unit,
+    onSwitchClick: () -> Unit,
+    onCurrencyTypeSelected: (CurrencyType) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp))
+            .background(headerColor)
+            .padding(top = if(getPlatform().name == "Android") 0.dp else 24.dp)
+            .padding(all = 24.dp)
+    ) {
+        Spacer(modifier = Modifier.height(24.dp))
+        RatesStatus(
+            status = status,
+            onRatesRefresh = onRatesRefresh
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        CurrencyInput(
+            source = source,
+            target = target,
+            onSwitchClick = onSwitchClick,
+            onCurrencyTypeSelected = onCurrencyTypeSelected
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        AmountInput(
+            amount = amount,
+            onAmountChange = onAmountChange
+        )
+    }
+
+}
+
+@Composable
+fun RatesStatus(
+    status: RateStatus,
+    onRatesRefresh: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row {
+            Image(
+                modifier = Modifier.size(50.dp),
+                painter = painterResource(Res.drawable.exchange_illustration),
+                contentDescription = "Exchange Illustration"
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = displayCurrentDateTime(),
+                    color = Color.White
+                )
+                Text(
+                    text = status.title,
+                    color = status.color,
+                    fontSize = MaterialTheme.typography.bodySmall.fontSize
+                )
+            }
+        }
+        if (status == RateStatus.Stale) {
+            IconButton(onClick = onRatesRefresh) {
+                Icon(
+                    painter = painterResource(Res.drawable.refresh_ic),
+                    contentDescription = "Refresh Rates",
+                    tint = staleColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CurrencyInput(
+    source: RequestState<Currency>,
+    target: RequestState<Currency>,
+    onSwitchClick: () -> Unit,
+    onCurrencyTypeSelected: (CurrencyType) -> Unit
+) {
+    var animationStarted by remember { mutableStateOf(false) }
+    val animatedRotation by animateFloatAsState(
+        targetValue = if (animationStarted) 180f else 0f,
+        animationSpec = tween(durationMillis = 500)
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CurrencyView(
+            placeHolder = "from",
+            currency = source,
+            onClick = {
+                if (source.isSuccess()) {
+                    onCurrencyTypeSelected(
+                        CurrencyType.Source(
+                            CurrencyCode.valueOf(source.getSuccessData().code)
+                        )
+                    )
+                }
+            }
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        IconButton(
+            modifier = Modifier
+                .padding(top = 24.dp)
+                .graphicsLayer {
+                    rotationY = animatedRotation
+                },
+            onClick = {
+                animationStarted = !animationStarted
+                onSwitchClick()
+            }
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.switch_ic),
+                contentDescription = "Switch Currencies",
+                tint = Color.White
+            )
+        }
+        Spacer(modifier = Modifier.height(14.dp))
+        CurrencyView(
+            placeHolder = "to",
+            currency = target,
+            onClick = {
+                if (target.isSuccess()) {
+                    onCurrencyTypeSelected(
+                        CurrencyType.Target(
+                            CurrencyCode.valueOf(target.getSuccessData().code)
+                        )
+                    )
+                }
+            }
+        )
+    }
+}
+
+
+@Composable
+fun RowScope.CurrencyView(
+    placeHolder: String,
+    currency: RequestState<Currency>,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier.weight(1f)
+    ) {
+        Text(
+            modifier = Modifier.padding(start = 12.dp),
+            text = placeHolder,
+            fontSize = MaterialTheme.typography.bodySmall.fontSize,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White.copy(alpha = 0.05f))
+                .height(54.dp)
+                .clickable { onClick() },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            currency.DisplayResult(
+                onSuccess = { data ->
+                    Icon(
+                        modifier = Modifier.size(24.dp),
+                        painter = painterResource(CurrencyCode.valueOf(data.code).flag),
+                        tint = Color.Unspecified,
+                        contentDescription = "Country Flag"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = CurrencyCode.valueOf(data.code).name,
+                        color = Color.White,
+                        fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun AmountInput(
+    amount: Double,
+    onAmountChange: (Double) -> Unit
+) {
+    TextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(54.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .animateContentSize(),
+        value = "$amount",
+        onValueChange = {
+            onAmountChange(
+                it.toDoubleOrNull() ?: 0.0
+            )
+        },
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            focusedContainerColor = Color.White.copy(alpha = 0.05f),
+            unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
+            disabledContainerColor = Color.White.copy(alpha = 0.05f),
+            errorContainerColor = Color.White.copy(alpha = 0.05f),
+            cursorColor = Color.White
+        ),
+        textStyle = TextStyle(
+            color = Color.White,
+            fontSize = MaterialTheme.typography.titleLarge.fontSize,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        ),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal
+        )
+    )
+
+}
