@@ -12,5 +12,7 @@ other platforms.
 
 ## 📸 Preview
 
-![CurrencyApp1 Screenshot](composeApp/src/commonMain/composeResources/readmeDrawable/CurrencyApp1.png)
-![CurrencyApp2 Screenshot](composeApp/src/commonMain/composeResources/readmeDrawable/CurrencyApp2.png)
+<div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+  <img src="composeApp/src/commonMain/composeResources/readmeDrawable/CurrencyApp1.png" alt="CurrencyApp1 Screenshot" style="width: 45%; max-width: 300px; border-radius: 8px;"/>
+  <img src="composeApp/src/commonMain/composeResources/readmeDrawable/CurrencyApp2.png" alt="CurrencyApp2 Screenshot" style="width: 45%; max-width: 300px; border-radius: 8px;"/>
+</div>
